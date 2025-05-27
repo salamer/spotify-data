@@ -138,7 +138,9 @@ export class UserController extends Controller {
       return notFound(404, { message: "No followers found for this user." });
     }
 
-    return followers.map((follow) => ({
+    return followers.filter(
+      (follow) => follow.follower !== null && follow.follower.id !== null
+    ).map((follow) => ({
       id: follow.follower.id,
       username: follow.follower.username,
       bio: follow.follower.bio,
@@ -166,7 +168,9 @@ export class UserController extends Controller {
       return notFound(404, { message: "No following found for this user." });
     }
 
-    return following.map((follow) => ({
+    return following.filter(
+      (follow) => follow.followed !== null && follow.followed.id !== null
+    ).map((follow) => ({
       id: follow.followed.id,
       username: follow.followed.username,
       bio: follow.followed.bio,

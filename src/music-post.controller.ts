@@ -1,7 +1,7 @@
 import {
   Body,
   Get,
-  Post as HttpPost,
+  Post,
   Route,
   Tags,
   Security,
@@ -21,9 +21,9 @@ import type { JwtPayload } from "./utils";
 export interface CreatePostBase64Input {
   imageBase64: string;
   imageFileType: string;
-  musicBase64?: string;
-  musicFileType?: string;
-  caption?: string;
+  musicBase64: string;
+  musicFileType: string;
+  caption: string;
 }
 
 export interface PostResponse {
@@ -41,7 +41,7 @@ export interface PostResponse {
 @Tags("Music Posts")
 export class MusicPostController extends Controller {
   @Security("jwt")
-  @HttpPost("")
+  @Post("")
   @SuccessResponse(200, "Post Created")
   public async createPost(
     @Request() req: Express.Request,
@@ -172,17 +172,19 @@ export class MusicPostController extends Controller {
     const searchTerm = query.trim().split(/\s+/).join(" & ");
 
     const posts = await AppDataSource.getRepository(MusicPost)
-      .createQueryBuilder("post")
-      .leftJoinAndSelect("post.user", "user")
-      .where("to_tsvector(post.caption) @@ plainto_tsquery(:query)", {
+      .createQueryBuilder("music_posts")
+      .leftJoinAndSelect("music_posts.user", "user")
+      .where("to_tsvector(music_posts.caption) @@ plainto_tsquery(:query)", {
         query: searchTerm,
       })
-      .orderBy("post.createdAt", "DESC")
+      .orderBy("music_posts.createdAt", "DESC")
       .take(limit)
       .skip(offset)
       .getMany();
 
-    return posts.map((post) => ({
+    return posts.filter(
+      (post) => post.user !== null && post.caption !== null
+    ).map((post) => ({
       id: post.id,
       coverImageUrl: post.coverImageUrl,
       musicUrl: post.audioUrl,

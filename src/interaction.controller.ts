@@ -1,5 +1,5 @@
 import {
-  Post as HttpPost,
+  Post,
   Delete,
   Route,
   Tags,
@@ -36,7 +36,7 @@ export interface CommentResponse {
 export class InteractionController extends Controller {
   @Security('jwt')
   @SuccessResponse(201, 'Liked')
-  @HttpPost('like')
+  @Post('like')
   public async likePost(
     @Request() req: Express.Request,
     @Path() postId: number,
@@ -79,7 +79,7 @@ export class InteractionController extends Controller {
 
   @Security('jwt')
   @SuccessResponse(201, 'Comment Created')
-  @HttpPost('comments')
+  @Post('comments')
   public async createComment(
     @Request() req: Express.Request,
     @Path() postId: number,
@@ -138,7 +138,9 @@ export class InteractionController extends Controller {
       skip: offset,
     });
 
-    return comments.map((c) => ({
+    return comments.filter(
+      (c) => c.user !== null && c.content !== null
+    ).map((c) => ({
       id: c.id,
       text: c.content,
       userId: c.userId,
