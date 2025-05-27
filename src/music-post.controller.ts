@@ -177,7 +177,7 @@ export class MusicPostController extends Controller {
       .where("to_tsvector(music_posts.caption) @@ plainto_tsquery(:query)", {
         query: searchTerm,
       })
-      .orderBy("music_posts.createdAt", "DESC")
+      .orderBy("music_posts.created_at", "DESC")
       .take(limit)
       .skip(offset)
       .getMany();
