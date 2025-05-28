@@ -37,6 +37,9 @@
 					"avatarUrl": {
 						"type": "string",
 						"nullable": true
+					},
+					"hasLiked": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -47,7 +50,8 @@
 					"createdAt",
 					"userId",
 					"username",
-					"avatarUrl"
+					"avatarUrl",
+					"hasLiked"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -100,14 +104,6 @@
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
-					},
-					"followers": {
-						"type": "number",
-						"format": "double"
-					},
-					"following": {
-						"type": "number",
-						"format": "double"
 					}
 				},
 				"required": [
@@ -115,9 +111,7 @@
 					"username",
 					"bio",
 					"avatarUrl",
-					"createdAt",
-					"followers",
-					"following"
+					"createdAt"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -275,9 +269,9 @@
 		}
 	},
 	"info": {
-		"title": "Instagram Simplified API",
+		"title": "Spotify Simplified API",
 		"version": "1.0.0",
-		"description": "API docs for simplified Instagram backend",
+		"description": "API docs for simplified Spotify backend",
 		"license": {
 			"name": "ISC"
 		},
@@ -377,7 +371,13 @@
 				"tags": [
 					"Music Posts"
 				],
-				"security": [],
+				"security": [
+					{
+						"jwt": [
+							"optional"
+						]
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -441,7 +441,13 @@
 				"tags": [
 					"Music Posts"
 				],
-				"security": [],
+				"security": [
+					{
+						"jwt": [
+							"optional"
+						]
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -510,171 +516,17 @@
 				"tags": [
 					"Music Posts"
 				],
-				"security": [],
+				"security": [
+					{
+						"jwt": [
+							"optional"
+						]
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
 						"name": "postId",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/users/{userIdToFollow}/follow": {
-			"post": {
-				"operationId": "FollowUser",
-				"responses": {
-					"200": {
-						"description": "Followed",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users & Follows"
-				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userIdToFollow",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/users/{userIdToUnfollow}/unfollow": {
-			"delete": {
-				"operationId": "UnfollowUser",
-				"responses": {
-					"200": {
-						"description": "Unfollowed",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users & Follows"
-				],
-				"security": [
-					{
-						"jwt": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userIdToUnfollow",
 						"required": true,
 						"schema": {
 							"format": "double",
@@ -718,113 +570,7 @@
 					}
 				},
 				"tags": [
-					"Users & Follows"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/users/{userId}/followers": {
-			"get": {
-				"operationId": "GetUserFollowers",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/UserProfileResponse"
-									},
-									"type": "array"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users & Follows"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/users/{userId}/following": {
-			"get": {
-				"operationId": "GetUserFollowing",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/UserProfileResponse"
-									},
-									"type": "array"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"message"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users & Follows"
+					"Users"
 				],
 				"security": [],
 				"parameters": [
@@ -877,9 +623,15 @@
 					}
 				},
 				"tags": [
-					"Users & Follows"
+					"Users"
 				],
-				"security": [],
+				"security": [
+					{
+						"jwt": [
+							"optional"
+						]
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",

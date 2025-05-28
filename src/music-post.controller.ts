@@ -13,10 +13,11 @@ import {
   TsoaResponse,
   SuccessResponse,
 } from "tsoa";
-import { AppDataSource } from "./models";
+import { AppDataSource, Like } from "./models";
 import { MusicPost, User } from "./models";
 import { uploadBase64ToObjectStorage } from "./objectstorage.service";
 import type { JwtPayload } from "./utils";
+import { In } from "typeorm";
 
 export interface CreatePostBase64Input {
   imageBase64: string;
@@ -35,6 +36,7 @@ export interface PostResponse {
   userId: number;
   username: string;
   avatarUrl: string | null;
+  hasLiked: boolean; // Optional, can be used for future like functionality
 }
 
 @Route("music-posts")
@@ -124,6 +126,7 @@ export class MusicPostController extends Controller {
         createdAt: newPost.createdAt,
         id: newPost.id,
         userId: newPost.userId,
+        hasLiked: false, // Default to false, can be updated in feed
       };
     } catch (error: any) {
       console.error("Post creation failed:", error);
@@ -133,8 +136,10 @@ export class MusicPostController extends Controller {
     }
   }
 
+  @Security("jwt", ["optional"])
   @Get("")
   public async getFeedPosts(
+    @Request() req: Express.Request,
     @Query() limit: number = 10,
     @Query() offset: number = 0
   ): Promise<PostResponse[]> {
@@ -145,6 +150,17 @@ export class MusicPostController extends Controller {
       skip: offset,
     });
 
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              postId: In(posts.map((p) => p.id)),
+            },
+          })
+        : [];
+
     return posts.map((post) => ({
       id: post.id,
       coverImageUrl: post.coverImageUrl,
@@ -154,11 +170,14 @@ export class MusicPostController extends Controller {
       userId: post.userId,
       username: post.user?.username || "unknown",
       avatarUrl: post.user?.avatarUrl || null,
+      hasLiked: likes.some((like) => like.postId === post.id),
     }));
   }
 
+  @Security("jwt", ["optional"])
   @Get("search")
   public async searchPosts(
+    @Request() req: Express.Request,
     @Query() query: string,
     @Query() limit: number = 10,
     @Query() offset: number = 0,
@@ -182,22 +201,36 @@ export class MusicPostController extends Controller {
       .skip(offset)
       .getMany();
 
-    return posts.filter(
-      (post) => post.user !== null && post.caption !== null
-    ).map((post) => ({
-      id: post.id,
-      coverImageUrl: post.coverImageUrl,
-      musicUrl: post.audioUrl,
-      caption: post.caption,
-      createdAt: post.createdAt,
-      userId: post.userId,
-      username: post.user?.username || "unknown",
-      avatarUrl: post.user?.avatarUrl || null,
-    }));
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).find({
+            where: {
+              userId: currentUser.userId,
+              postId: In(posts.map((p) => p.id)),
+            },
+          })
+        : [];
+
+    return posts
+      .filter((post) => post.user !== null && post.caption !== null)
+      .map((post) => ({
+        id: post.id,
+        coverImageUrl: post.coverImageUrl,
+        musicUrl: post.audioUrl,
+        caption: post.caption,
+        createdAt: post.createdAt,
+        userId: post.userId,
+        username: post.user?.username || "unknown",
+        avatarUrl: post.user?.avatarUrl || null,
+        hasLiked: likes.some((like) => like.postId === post.id),
+      }));
   }
 
+  @Security("jwt", ["optional"])
   @Get("{postId}")
   public async getPostById(
+    @Request() req: Express.Request,
     @Path() postId: number,
     @Res() notFoundResponse: TsoaResponse<404, { message: string }>
   ): Promise<PostResponse> {
@@ -210,6 +243,17 @@ export class MusicPostController extends Controller {
       return notFoundResponse(404, { message: "Post not found" });
     }
 
+    const currentUser = req.user as JwtPayload;
+    const likes =
+      currentUser && currentUser.userId
+        ? await AppDataSource.getRepository(Like).findOne({
+            where: {
+              userId: currentUser.userId,
+              postId: post.id,
+            },
+          })
+        : null;
+
     return {
       id: post.id,
       coverImageUrl: post.coverImageUrl,
@@ -219,6 +263,7 @@ export class MusicPostController extends Controller {
       userId: post.userId,
       username: post.user?.username || "unknown",
       avatarUrl: post.user?.avatarUrl || null,
+      hasLiked: likes !== null,
     };
   }
 }

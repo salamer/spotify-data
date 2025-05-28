@@ -126,37 +126,12 @@ export class Like extends BaseEntity {
   postId: number;
 }
 
-@Entity({ schema: schema, name: 'follows' })
-export class Follow extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ name: 'follower_id' })
-  followerId: number;
-
-  @Column({ name: 'followed_id' })
-  followedId: number;
-
-  @Column({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt: Date;
-
-  @ManyToOne(() => User, (user) => user.id)
-  follower: User;
-
-  @ManyToOne(() => User, (user) => user.id)
-  followed: User;
-}
-
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: config.DATABASE_URL,
   synchronize: false,
   logging: true,
-  entities: [User, MusicPost, Comment, Like, Follow],
+  entities: [User, MusicPost, Comment, Like],
 
   subscribers: [],
   migrations: [],
