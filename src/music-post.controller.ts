@@ -18,6 +18,7 @@ import { MusicPost, User } from "./models";
 import { uploadBase64ToObjectStorage } from "./objectstorage.service";
 import type { JwtPayload } from "./utils";
 import { In } from "typeorm";
+import { getCurrentUser } from "./auth.middleware";
 
 export interface CreatePostBase64Input {
   imageBase64: string;
@@ -42,7 +43,7 @@ export interface PostResponse {
 @Route("music-posts")
 @Tags("Music Posts")
 export class MusicPostController extends Controller {
-  @Security("jwt")
+  // @Security("jwt")
   @Post("")
   @SuccessResponse(200, "Post Created")
   public async createPost(
@@ -51,7 +52,8 @@ export class MusicPostController extends Controller {
     @Res() badRequestResponse: TsoaResponse<400, { message: string }>,
     @Res() serverErrorResponse: TsoaResponse<500, { message: string }>
   ): Promise<PostResponse> {
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
 
     if (!body.imageBase64 || !body.imageFileType.startsWith("image/")) {
       return badRequestResponse(400, {
@@ -136,7 +138,7 @@ export class MusicPostController extends Controller {
     }
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("")
   public async getFeedPosts(
     @Request() req: Express.Request,
@@ -150,7 +152,8 @@ export class MusicPostController extends Controller {
       skip: offset,
     });
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({
@@ -174,7 +177,7 @@ export class MusicPostController extends Controller {
     }));
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("search")
   public async searchPosts(
     @Request() req: Express.Request,
@@ -201,7 +204,8 @@ export class MusicPostController extends Controller {
       .skip(offset)
       .getMany();
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).find({
@@ -227,7 +231,7 @@ export class MusicPostController extends Controller {
       }));
   }
 
-  @Security("jwt", ["optional"])
+  // @Security("jwt", ["optional"])
   @Get("{postId}")
   public async getPostById(
     @Request() req: Express.Request,
@@ -243,7 +247,8 @@ export class MusicPostController extends Controller {
       return notFoundResponse(404, { message: "Post not found" });
     }
 
-    const currentUser = req.user as JwtPayload;
+    // const currentUser = req.user as JwtPayload;
+    const currentUser = getCurrentUser();
     const likes =
       currentUser && currentUser.userId
         ? await AppDataSource.getRepository(Like).findOne({

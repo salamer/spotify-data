@@ -1,6 +1,8 @@
 // This script initializes the database by creating the schema and synchronizing the tables
 
-import { AppDataSource, schema, MusicPost } from './models';
+import config from './config';
+import { AppDataSource, schema, MusicPost, User } from './models';
+import { hashPassword } from './utils';
 
 export async function initializeDatabase() {
   console.log('Initializing database...');
@@ -22,6 +24,24 @@ export async function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS spotify_posts_search_vector_idx
         ON ${schema}.music_posts USING gin (to_tsvector('english', caption));
     `);
+
+  // only for development purposes
+  const repo = AppDataSource.getRepository(User);
+  const adminUser = repo.create({
+    username: config.ADMIN_USERNAME,
+    email: 'admin@admin.org',
+    passwordHash: await hashPassword('admin123'),
+    id: config.ADMIN_USER_ID, // Set a fixed ID for the admin user
+  });
+  await repo.save(adminUser);
+
+  const guestUser = repo.create({
+    username: config.GUEST_USERNAME,
+    email: 'guest@guest.org',
+    passwordHash: await hashPassword('guest123'),
+    id: config.GUEST_USER_ID, // Set a fixed ID for the guest user
+  });
+  await repo.save(guestUser);
 }
 // This function will be called when the script is run
 initializeDatabase()
